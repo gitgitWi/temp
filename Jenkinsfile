@@ -1,11 +1,15 @@
 pipeline {
     // 스테이지 별로 다른 거
+    // 여기서는 node 하나만 돌아가서 별도로 지정 안함
     agent any
 
     triggers {
         pollSCM('*/3 * * * *')
     }
 
+    // 환경변수 등록
+    // EC2 콘솔에 등록된 변수
+    // IAM에서 생성하고 Jenkins credential에 등록
     environment {
       AWS_ACCESS_KEY_ID = credentials('awsAccessKeyId')
       AWS_SECRET_ACCESS_KEY = credentials('awsSecretAccessKey')
@@ -22,11 +26,12 @@ pipeline {
                 echo "Lets start Long Journey! ENV: ${ENV}"
                 echo 'Clonning Repository'
 
-                git url: 'https://github.com/frontalnh/temp.git',
+                git url: 'https://github.com/gitgitWi/temp.git',
                     branch: 'master',
                     credentialsId: 'jenkinsgit'
             }
 
+            // 위의 git pull 끝나고 실행
             post {
                 // If Maven was able to run the tests, even if some of the test
                 // failed, record the test results and archive the jar file.
@@ -40,10 +45,10 @@ pipeline {
         stage('Deploy Frontend') {
           steps {
             echo 'Deploying Frontend'
-            // 프론트엔드 디렉토리의 정적파일들을 S3 에 올림, 이 전에 반드시 EC2 instance profile 을 등록해야함.
+            // 프론트엔드 디렉토리(website) 의 정적파일들을 S3 에 올림, 이 전에 반드시 EC2 instance profile 을 등록해야함.
             dir ('./website'){
                 sh '''
-                aws s3 sync ./ s3://namhoontest
+                aws s3 sync ./ s3://jenkins-test-gitgitwi
                 '''
             }
           }
@@ -54,7 +59,7 @@ pipeline {
               success {
                   echo 'Successfully Cloned Repository'
 
-                  mail  to: 'frontalnh@gmail.com',
+                  mail  to: 'gitgitwi@gmail.com',
                         subject: "Deploy Frontend Success",
                         body: "Successfully deployed frontend!"
                   
@@ -62,7 +67,7 @@ pipeline {
               failure {
                   echo 'I failed :('
 
-                  mail  to: 'frontalnh@gmail.com',
+                  mail  to: 'gitgitwi@gmail.com',
                         subject: "Failed Pipelinee",
                         body: "Something is wrong with deploy frontend"
               }
@@ -140,7 +145,7 @@ pipeline {
 
           post {
             success {
-              mail  to: 'frontalnh@gmail.com',
+              mail  to: 'gitgitwi@gmail.com',
                     subject: "Deploy Success",
                     body: "Successfully deployed!"
                   
